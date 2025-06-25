@@ -1,0 +1,225 @@
+<% layout('layout-simple') -%>
+
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">
+        <i class="bi bi-speedometer2 text-primary"></i>
+        系統儀表板
+      </h1>
+      <div class="text-muted">
+        <i class="bi bi-clock"></i>
+        <%= moment().format('YYYY年MM月DD日 HH:mm:ss') %>
+      </div>
+    </div>
+
+    <!-- 統計卡片 -->
+    <div class="row mb-4">
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="h4 mb-0"><%= stats.totalDocuments || 0 %></div>
+                <div class="small">總文件數</div>
+              </div>
+              <div class="h2">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-success text-white h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <% const completedCount = stats.statusStats.find(s =>
+                s.processing_status === 'completed'); %>
+                <div class="h4 mb-0">
+                  <%= completedCount ? completedCount.count : 0 %>
+                </div>
+                <div class="small">已處理完成</div>
+              </div>
+              <div class="h2">
+                <i class="bi bi-check-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-info text-white h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <% const processingCount = stats.statusStats.find(s =>
+                s.processing_status === 'processing'); %>
+                <div class="h4 mb-0">
+                  <%= processingCount ? processingCount.count : 0 %>
+                </div>
+                <div class="small">處理中</div>
+              </div>
+              <div class="h2">
+                <i class="bi bi-gear"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="h4 mb-0"><%= categoryStats.length || 0 %></div>
+                <div class="small">功能分類</div>
+              </div>
+              <div class="h2">
+                <i class="bi bi-tags"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最近處理的文件 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-clock-history text-primary"></i>
+          最近處理的文件
+        </h5>
+      </div>
+      <div class="card-body">
+        <% if (recentDocuments && recentDocuments.length > 0) { %>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>文件名稱</th>
+                <th>分類</th>
+                <th>狀態</th>
+                <th>處理時間</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% recentDocuments.forEach(function(doc) { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i
+                      class="bi <%= helpers.getFileIcon(doc.file_extension) %> text-primary me-2"
+                    ></i>
+                    <div>
+                      <div class="fw-medium"><%= doc.file_name %></div>
+                      <small class="text-muted">
+                        <%= helpers.formatFileSize(doc.file_size) %>
+                      </small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary">
+                    <%= doc.category_name || '未分類' %>
+                  </span>
+                </td>
+                <td>
+                  <span
+                    class="badge bg-<%= helpers.getStatusColor(doc.processing_status) %>"
+                  >
+                    <i
+                      class="bi bi-<%= doc.processing_status === 'completed' ? 'check-circle' : doc.processing_status === 'failed' ? 'x-circle' : doc.processing_status === 'processing' ? 'gear' : 'clock' %>"
+                    ></i>
+                    <%= helpers.getStatusText(doc.processing_status) %>
+                  </span>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= moment(doc.created_at).fromNow() %>
+                  </small>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <a
+                      href="/documents/<%= doc.id %>"
+                      class="btn btn-outline-primary"
+                    >
+                      <i class="bi bi-eye"></i> 查看
+                    </a>
+                    <% if (doc.has_summary) { %>
+                    <a
+                      href="/summaries/<%= doc.id %>"
+                      class="btn btn-outline-success"
+                    >
+                      <i class="bi bi-card-text"></i> 摘要
+                    </a>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } else { %>
+        <div class="text-center py-4">
+          <i class="bi bi-inbox display-4 text-muted"></i>
+          <p class="text-muted mt-2">尚無處理過的文件</p>
+          <a href="/documents" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 查看文件列表
+          </a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- 分類統計 -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-pie-chart text-primary"></i>
+          分類統計
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <% if (categoryStats && categoryStats.length > 0) { %> <%
+          categoryStats.forEach(function(cat) { %>
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="flex-shrink-0">
+                <div class="bg-primary bg-opacity-10 rounded p-2">
+                  <i class="bi bi-folder text-primary"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <div class="fw-medium"><%= cat.category_name %></div>
+                <div class="text-muted small"><%= cat.count %> 個文件</div>
+              </div>
+              <div class="flex-shrink-0">
+                <span class="badge bg-primary rounded-pill">
+                  <%= cat.count %>
+                </span>
+              </div>
+            </div>
+          </div>
+          <% }); %> <% } else { %>
+          <div class="col-12">
+            <div class="text-center text-muted">
+              <i class="bi bi-bar-chart"></i>
+              暫無統計資料
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

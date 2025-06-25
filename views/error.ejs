@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title || '錯誤' %> - KESS 知識提取與摘要系統</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link href="/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- 導航欄 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <i class="bi bi-book-half"></i>
+          KESS 知識提取與摘要系統
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/dashboard">
+                <i class="bi bi-speedometer2"></i> 儀表板
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/documents">
+                <i class="bi bi-file-earmark-text"></i> 文件列表
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <main class="container my-4">
+      <div class="container mt-5">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-body text-center">
+                <div class="mb-4">
+                  <i
+                    class="bi bi-exclamation-triangle text-warning"
+                    style="font-size: 4rem"
+                  ></i>
+                </div>
+                <h1 class="card-title h2 mb-3">系統錯誤</h1>
+                <p class="card-text text-muted mb-4"><%= message %></p>
+                <% if (typeof error !== 'undefined' && error && error.stack) {
+                %>
+                <div class="alert alert-danger text-start">
+                  <h6>錯誤詳情：</h6>
+                  <pre class="mb-0"><%= error.stack %></pre>
+                </div>
+                <% } %>
+                <div class="mt-4">
+                  <a href="/dashboard" class="btn btn-primary me-2">
+                    <i class="bi bi-house"></i> 返回首頁
+                  </a>
+                  <button
+                    onclick="history.back()"
+                    class="btn btn-outline-secondary"
+                  >
+                    <i class="bi bi-arrow-left"></i> 返回上頁
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="bg-light py-4 mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <p class="text-muted mb-0">
+              &copy; 2025 SFDA Team. KESS 知識提取與摘要系統
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="text-muted mb-0"><i class="bi bi-cpu"></i> 版本 1.0.0</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

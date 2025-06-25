@@ -1,0 +1,220 @@
+<%- include('layout', { title: title, currentPage: 'documents', body: `
+<div class="row">
+  <div class="col-12">
+    <!-- 麵包屑導航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/dashboard">首頁</a></li>
+        <li class="breadcrumb-item"><a href="/documents">文件列表</a></li>
+        <li class="breadcrumb-item active">${document.file_name}</li>
+      </ol>
+    </nav>
+
+    <div class="row">
+      <!-- 文件詳情 -->
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i
+                class="bi ${helpers.getFileIcon(document.file_extension)} text-primary"
+              ></i>
+              ${document.file_name}
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- 文件內容 -->
+            <div class="mb-4">
+              <h6 class="text-muted">文件內容</h6>
+              <div
+                class="border rounded p-3"
+                style="max-height: 600px; overflow-y: auto"
+              >
+                <pre class="mb-0 text-wrap">
+${document.content_preview || '暫無內容預覽'}</pre
+                >
+              </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary" onclick="copyContent()">
+                <i class="bi bi-clipboard"></i> 複製內容
+              </button>
+              <button class="btn btn-outline-success" onclick="downloadFile()">
+                <i class="bi bi-download"></i> 下載檔案
+              </button>
+              <button
+                class="btn btn-outline-warning"
+                onclick="reprocessDocument()"
+              >
+                <i class="bi bi-arrow-clockwise"></i> 重新處理
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 側邊欄資訊 -->
+      <div class="col-lg-4">
+        <!-- 基本資訊 -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6 class="card-title mb-0">
+              <i class="bi bi-info-circle text-primary"></i>
+              基本資訊
+            </h6>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-4">檔案名稱</dt>
+              <dd class="col-sm-8">${document.file_name}</dd>
+
+              <dt class="col-sm-4">檔案大小</dt>
+              <dd class="col-sm-8">
+                ${helpers.formatFileSize(document.file_size)}
+              </dd>
+
+              <dt class="col-sm-4">檔案類型</dt>
+              <dd class="col-sm-8">
+                <span class="badge bg-light text-dark">
+                  ${document.file_extension.toUpperCase()}
+                </span>
+              </dd>
+
+              <dt class="col-sm-4">分類</dt>
+              <dd class="col-sm-8">
+                <span class="badge bg-secondary">
+                  ${document.category_name || '未分類'}
+                </span>
+              </dd>
+
+              <dt class="col-sm-4">處理狀態</dt>
+              <dd class="col-sm-8">
+                <span
+                  class="badge bg-\${helpers.getStatusColor(document.processing_status)}"
+                >
+                  <i
+                    class="bi bi-\${document.processing_status === 'completed' ? 'check-circle' : document.processing_status === 'failed' ? 'x-circle' : document.processing_status === 'processing' ? 'gear' : 'clock'}"
+                  ></i>
+                  \${helpers.getStatusText(document.processing_status)}
+                </span>
+              </dd>
+
+              <dt class="col-sm-4">字數統計</dt>
+              <dd class="col-sm-8">${document.word_count || 0} 字</dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- 時間資訊 -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6 class="card-title mb-0">
+              <i class="bi bi-clock text-primary"></i>
+              時間資訊
+            </h6>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">檔案修改</dt>
+              <dd class="col-sm-7">
+                <small class="text-muted">
+                  ${moment(document.file_modified_time).format('YYYY-MM-DD
+                  HH:mm:ss')}
+                </small>
+              </dd>
+
+              <dt class="col-sm-5">加入系統</dt>
+              <dd class="col-sm-7">
+                <small class="text-muted">
+                  ${moment(document.created_at).format('YYYY-MM-DD HH:mm:ss')}
+                </small>
+              </dd>
+
+              <dt class="col-sm-5">最後更新</dt>
+              <dd class="col-sm-7">
+                <small class="text-muted">
+                  ${moment(document.updated_at).format('YYYY-MM-DD HH:mm:ss')}
+                </small>
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- 路徑資訊 -->
+        <div class="card">
+          <div class="card-header">
+            <h6 class="card-title mb-0">
+              <i class="bi bi-folder text-primary"></i>
+              路徑資訊
+            </h6>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-12">原始路徑</dt>
+              <dd class="col-12">
+                <code class="small">${document.original_path}</code>
+              </dd>
+
+              ${document.archive_path ? \`
+              <dt class="col-12">歸檔路徑</dt>
+              <dd class="col-12">
+                <code class="small">\${document.archive_path}</code>
+              </dd>
+              \` : ''}
+
+              <dt class="col-12">檔案雜湊</dt>
+              <dd class="col-12">
+                <code class="small">${document.file_hash}</code>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 複製內容到剪貼簿
+  function copyContent() {
+    const content = document.querySelector("pre").textContent;
+    navigator.clipboard.writeText(content).then(
+      function () {
+        alert("內容已複製到剪貼簿");
+      },
+      function (err) {
+        console.error("複製失敗: ", err);
+        alert("複製失敗");
+      }
+    );
+  }
+
+  // 下載檔案
+  function downloadFile() {
+    window.open("/api/documents/${document.id}/download", "_blank");
+  }
+
+  // 重新處理文件
+  async function reprocessDocument() {
+    if (!confirm("確定要重新處理這個文件嗎？")) return;
+
+    try {
+      const response = await fetch("/api/documents/${document.id}/reprocess", {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("文件已加入重新處理佇列");
+        window.location.reload();
+      } else {
+        alert("重新處理失敗: " + data.error);
+      }
+    } catch (error) {
+      alert("重新處理失敗: 網路錯誤");
+    }
+  }
+</script>
+` }) %>
