@@ -176,25 +176,21 @@
                     <dt class="col-sm-5">檔案修改</dt>
                     <dd class="col-sm-7">
                       <small class="text-muted">
-                        <%=
-                        moment(document.file_modified_time).format('YYYY-MM-DD
-                        HH:mm:ss') %>
+                        <%= moment(document.file_modified_time).format('YYYY-MM-DD HH:mm:ss') %>
                       </small>
                     </dd>
 
                     <dt class="col-sm-5">加入系統</dt>
                     <dd class="col-sm-7">
                       <small class="text-muted">
-                        <%= moment(document.created_at).format('YYYY-MM-DD
-                        HH:mm:ss') %>
+                        <%= moment(document.created_at).format('YYYY-MM-DD HH:mm:ss') %>
                       </small>
                     </dd>
 
                     <dt class="col-sm-5">最後更新</dt>
                     <dd class="col-sm-7">
                       <small class="text-muted">
-                        <%= moment(document.updated_at).format('YYYY-MM-DD
-                        HH:mm:ss') %>
+                        <%= moment(document.updated_at).format('YYYY-MM-DD HH:mm:ss') %>
                       </small>
                     </dd>
                   </dl>

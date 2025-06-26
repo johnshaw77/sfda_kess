@@ -53,9 +53,15 @@ class CategoryService {
       for (const category of categories) {
         // 檢查檔案路徑是否包含監控資料夾路徑
         if (category.watch_folder && filePath.includes(category.watch_folder)) {
+          logger.logInfo(
+            `路徑匹配分類: ${filePath} -> ${category.category_name} (${category.watch_folder})`
+          );
           return category;
         }
+      }
 
+      // 如果沒有直接路徑匹配，使用其他方式識別
+      for (const category of categories) {
         // 檢查檔案命名模式
         if (category.file_pattern) {
           const pattern = new RegExp(category.file_pattern, "i");
@@ -75,11 +81,30 @@ class CategoryService {
         }
       }
 
-      // 如果無法識別，返回預設類別（IT）
-      return await this.getCategoryByCode("IT");
+      // 如果無法識別，返回預設類別（通用類別）
+      const defaultCategory = await dbConnection.query(
+        "SELECT * FROM kess_categories WHERE category_name = '通用類別' AND is_active = TRUE"
+      );
+      if (defaultCategory.length > 0) {
+        return defaultCategory[0];
+      }
+
+      // 如果沒有通用類別，返回 ID 最小的類別
+      const firstCategory = await dbConnection.query(
+        "SELECT * FROM kess_categories WHERE is_active = TRUE ORDER BY id LIMIT 1"
+      );
+      return firstCategory.length > 0 ? firstCategory[0] : null;
     } catch (error) {
       logger.logError(`自動識別功能類別失敗: ${filePath}`, error);
-      return await this.getCategoryByCode("IT"); // 預設類別
+      // 返回預設類別
+      try {
+        const defaultCategory = await dbConnection.query(
+          "SELECT * FROM kess_categories WHERE category_name = '通用類別' AND is_active = TRUE"
+        );
+        return defaultCategory.length > 0 ? defaultCategory[0] : null;
+      } catch (err) {
+        return null;
+      }
     }
   }
 
@@ -457,6 +482,69 @@ class CategoryService {
       return `根據檔案內容判斷為 ${contentCategory.category_name}`;
     } else {
       return "無法自動判斷，使用預設類別";
+    }
+  }
+
+  /**
+   * 根據路徑對應規則取得分類 ID
+   * @param {string} filePath - 檔案路徑
+   * @returns {number|null} 分類 ID，如果沒有匹配則返回 null
+   */
+  async getCategoryByPathMapping(filePath) {
+    try {
+      const mappings = await dbConnection.query(`
+        SELECT path_pattern, category_id, is_regex, priority
+        FROM kess_path_category_mapping
+        WHERE is_active = TRUE
+        ORDER BY priority DESC
+      `);
+
+      for (const mapping of mappings) {
+        if (this.matchPath(filePath, mapping.path_pattern, mapping.is_regex)) {
+          logger.logInfo(
+            `路徑對應匹配: ${filePath} -> 分類 ${mapping.category_id}`
+          );
+          return mapping.category_id;
+        }
+      }
+
+      return null; // 沒有找到匹配的路徑對應
+    } catch (error) {
+      logger.logError(`取得路徑對應分類失敗: ${filePath}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 路徑匹配函數
+   * @param {string} filePath - 檔案路徑
+   * @param {string} pattern - 路徑模式
+   * @param {boolean} isRegex - 是否為正規表達式
+   * @returns {boolean} 是否匹配
+   */
+  matchPath(filePath, pattern, isRegex = false) {
+    if (isRegex) {
+      try {
+        const regex = new RegExp(pattern, "i");
+        return regex.test(filePath);
+      } catch (error) {
+        logger.logError(`正規表達式錯誤: ${pattern}`, error);
+        return false;
+      }
+    } else {
+      // 支援 SQL LIKE 語法的通配符匹配
+      const regexPattern = pattern
+        .replace(/\\/g, "\\\\") // 轉義反斜線
+        .replace(/%/g, ".*") // % 匹配任何字符序列
+        .replace(/_/g, "."); // _ 匹配任何單個字符
+
+      try {
+        const regex = new RegExp(`^${regexPattern}$`, "i");
+        return regex.test(filePath);
+      } catch (error) {
+        logger.logError(`通配符模式錯誤: ${pattern}`, error);
+        return false;
+      }
     }
   }
 }

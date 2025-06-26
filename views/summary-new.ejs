@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>生成新摘要 - KESS 知識提取與摘要系統</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link href="/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- 導航欄 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <i class="bi bi-book-half"></i>
+          KESS 知識提取與摘要系統
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="/dashboard"
+              >
+                <i class="bi bi-speedometer2"></i> 儀表板
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="/documents"
+              >
+                <i class="bi bi-file-earmark-text"></i> 文件列表
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主要內容 -->
+
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 頁面標題 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h3 mb-1">
+            <i class="bi bi-plus-circle text-primary"></i>
+            生成新摘要
+          </h1>
+          <p class="text-muted mb-0">
+            <a href="/documents/<%= document.id %>" class="text-decoration-none">
+              <i class="bi bi-arrow-left"></i> 返回文件詳情
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <!-- 文件資訊 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-file-earmark-text"></i>
+            <%= document.file_name %>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <small class="text-muted">分類：</small>
+              <span class="badge bg-secondary"><%= document.category_name || '未分類' %></span>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted">檔案大小：</small>
+              <%= helpers.formatFileSize(document.file_size) %>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted">處理狀態：</small>
+              <span class="badge bg-success">已完成</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 生成摘要表單 -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-gear"></i>
+            摘要生成設定
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="summaryForm" action="/api/summaries/<%= document.id %>/generate" method="POST">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="summaryLength" class="form-label">摘要長度</label>
+                <select class="form-select" id="summaryLength" name="length">
+                  <option value="short">簡短（100-200字）</option>
+                  <option value="medium" selected>適中（200-400字）</option>
+                  <option value="long">詳細（400-600字）</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="summaryStyle" class="form-label">摘要風格</label>
+                <select class="form-select" id="summaryStyle" name="style">
+                  <option value="formal" selected>正式</option>
+                  <option value="casual">輕鬆</option>
+                  <option value="technical">技術性</option>
+                  <option value="executive">執行摘要</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="includeKeywords" name="includeKeywords" checked>
+                <label class="form-check-label" for="includeKeywords">
+                  提取關鍵字
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="includeEntities" name="includeEntities" checked>
+                <label class="form-check-label" for="includeEntities">
+                  識別重要實體
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="customPrompt" class="form-label">自訂提示詞（選填）</label>
+              <textarea class="form-control" id="customPrompt" name="customPrompt" rows="3" 
+                        placeholder="例如：請特別關注文件中的安全規範和品質要求..."></textarea>
+              <div class="form-text">自訂提示詞可以讓摘要更符合您的特定需求</div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" id="generateBtn">
+                <i class="bi bi-gear"></i>
+                <span class="btn-text">開始生成</span>
+              </button>
+              <a href="/documents/<%= document.id %>" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> 取消
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 生成進度 -->
+      <div id="progressCard" class="card mt-4" style="display: none;">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+              <span class="visually-hidden">生成中...</span>
+            </div>
+            <div>
+              <h6 class="card-title mb-1">正在生成摘要</h6>
+              <p class="card-text text-muted mb-0">請稍候，這可能需要幾分鐘時間...</p>
+            </div>
+          </div>
+          <div class="progress mt-3">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 role="progressbar" style="width: 0%" id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('summaryForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const generateBtn = document.getElementById('generateBtn');
+  const progressCard = document.getElementById('progressCard');
+  const progressBar = document.getElementById('progressBar');
+  
+  // 顯示進度卡片
+  progressCard.style.display = 'block';
+  generateBtn.disabled = true;
+  generateBtn.querySelector('.btn-text').textContent = '生成中...';
+  
+  // 模擬進度更新
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 20;
+    if (progress > 90) progress = 90;
+    progressBar.style.width = progress + '%';
+  }, 1000);
+  
+  // 發送請求
+  fetch('/api/summaries/<%= document.id %>/generate', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+    
+    if (data.success) {
+      setTimeout(() => {
+        window.location.href = '/summaries/<%= document.id %>';
+      }, 1000);
+    } else {
+      alert('生成失敗：' + (data.message || '未知錯誤'));
+      generateBtn.disabled = false;
+      generateBtn.querySelector('.btn-text').textContent = '開始生成';
+      progressCard.style.display = 'none';
+    }
+  })
+  .catch(error => {
+    clearInterval(progressInterval);
+    console.error('Error:', error);
+    alert('生成失敗：網路錯誤');
+    generateBtn.disabled = false;
+    generateBtn.querySelector('.btn-text').textContent = '開始生成';
+    progressCard.style.display = 'none';
+  });
+});
+</script>
+
+    <!-- 頁腳 -->
+    <footer class="bg-light py-4 mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <p class="text-muted mb-0">
+              &copy; 2025 SFDA Team. KESS 知識提取與摘要系統
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="text-muted mb-0"><i class="bi bi-cpu"></i> 版本 1.0.0</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

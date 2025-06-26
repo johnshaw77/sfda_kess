@@ -8,6 +8,39 @@ class SummaryService {
   constructor() {
     this.llmClient = null;
     this.promptManager = new PromptManager();
+  }
+
+  /**
+   * 提取章節內容
+   * @param {string} content - 完整內容
+   * @param {string} sectionName - 章節名稱
+   * @returns {string} 章節內容
+   */
+  extractSection(content, sectionName) {
+    // 支援多種格式：
+    // ## 2. 關鍵要點
+    // 關鍵要點：
+    // 關鍵要點:
+    const patterns = [
+      new RegExp(`##\\s*\\d+\\.\\s*${sectionName}([\\s\\S]*?)(?=##\\s*\\d+\\.|$)`, "i"),
+      new RegExp(`${sectionName}[：:]([\\s\\S]*?)(?=\\n\\d+\\.|##|$)`, "i"),
+      new RegExp(`${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n\\n|##|$)`, "i")
+    ];
+    
+    for (const regex of patterns) {
+      const match = content.match(regex);
+      if (match && match[1].trim()) {
+        return match[1].trim();
+      }
+    }
+    
+    return "";
+  }
+
+class SummaryService {
+  constructor() {
+    this.llmClient = null;
+    this.promptManager = new PromptManager();
     this.isInitialized = false;
   }
 

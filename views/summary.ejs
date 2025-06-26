@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文件摘要 - KESS 知識提取與摘要系統</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link href="/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- 導航欄 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <i class="bi bi-book-half"></i>
+          KESS 知識提取與摘要系統
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="/dashboard"
+              >
+                <i class="bi bi-speedometer2"></i> 儀表板
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="/documents"
+              >
+                <i class="bi bi-file-earmark-text"></i> 文件列表
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主要內容 -->
+
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 頁面標題 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h3 mb-1">
+            <i class="bi bi-card-text text-primary"></i>
+            文件摘要
+          </h1>
+          <p class="text-muted mb-0">
+            <a href="/documents/<%= document.id %>" class="text-decoration-none">
+              <i class="bi bi-arrow-left"></i> 返回文件詳情
+            </a>
+          </p>
+        </div>
+        <div class="btn-group">
+          <% if (summaries && summaries.length > 0) { %>
+          <a href="/summaries/<%= document.id %>/new" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 重新生成摘要
+          </a>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- 文件資訊 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-file-earmark-text"></i>
+            <%= document.file_name %>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">分類：</small>
+              <span class="badge bg-secondary"><%= document.category_name || '未分類' %></span>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">檔案大小：</small>
+              <%= helpers.formatFileSize(document.file_size) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 摘要列表 -->
+      <% if (summaries && summaries.length > 0) { %>
+        <% summaries.forEach(function(summary, index) { %>
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-card-text"></i>
+              摘要 #<%= index + 1 %>
+            </h5>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary" onclick="copyToClipboard('summary-<%= summary.id %>')">
+                <i class="bi bi-clipboard"></i> 複製
+              </button>
+              <a href="/api/summaries/<%= summary.id %>/download" class="btn btn-outline-primary">
+                <i class="bi bi-download"></i> 下載
+              </a>
+              <button class="btn btn-outline-danger" onclick="deleteSummary(<%= summary.id %>)">
+                <i class="bi bi-trash"></i> 刪除
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- 摘要內容 -->
+            <div id="summary-<%= summary.id %>" class="summary-content">
+              <% if (summary.summary_content) { %>
+                <div class="mb-4">
+                  <h6>摘要內容</h6>
+                  <div class="border rounded p-3 bg-light">
+                    <%= summary.summary_content.replace(/\n/g, '<br>') %>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- 關鍵字 -->
+              <% if (summary.keywords && summary.keywords.length > 0) { %>
+                <div class="mb-4">
+                  <h6>關鍵字</h6>
+                  <div class="d-flex flex-wrap gap-2">
+                    <% summary.keywords.forEach(function(keyword) { %>
+                      <span class="badge bg-primary"><%= keyword %></span>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- 實體 -->
+              <% if (summary.entities && summary.entities.length > 0) { %>
+                <div class="mb-4">
+                  <h6>重要實體</h6>
+                  <div class="d-flex flex-wrap gap-2">
+                    <% summary.entities.forEach(function(entity) { %>
+                      <span class="badge bg-info"><%= entity %></span>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- 摘要資訊 -->
+            <div class="row mt-4 pt-3 border-top text-muted small">
+              <div class="col-md-6">
+                <i class="bi bi-clock"></i>
+                生成時間：<%= moment(summary.created_at).format('YYYY-MM-DD HH:mm:ss') %>
+              </div>
+              <div class="col-md-6">
+                <i class="bi bi-gear"></i>
+                生成方式：<%= summary.generation_method || '自動生成' %>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% }); %>
+      <% } else { %>
+        <!-- 無摘要狀態 -->
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-card-text display-4 text-muted"></i>
+            <h5 class="text-muted mt-3">尚未生成摘要</h5>
+            <p class="text-muted">為此文件生成摘要以便快速了解內容重點</p>
+            <a href="/summaries/<%= document.id %>/new" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i> 生成摘要
+            </a>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+  const element = document.getElementById(elementId);
+  const text = element.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('摘要已複製到剪貼簿');
+  });
+}
+
+function deleteSummary(summaryId) {
+  if (confirm('確定要刪除此摘要嗎？')) {
+    fetch(`/api/summaries/${summaryId}`, {
+      method: 'DELETE'
+    }).then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('刪除失敗');
+      }
+    });
+  }
+}
+</script>
+
+    <!-- 頁腳 -->
+    <footer class="bg-light py-4 mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <p class="text-muted mb-0">
+              &copy; 2025 SFDA Team. KESS 知識提取與摘要系統
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="text-muted mb-0"><i class="bi bi-cpu"></i> 版本 1.0.0</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>
