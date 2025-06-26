@@ -8,6 +8,7 @@ class SummaryService {
   constructor() {
     this.llmClient = null;
     this.promptManager = new PromptManager();
+    this.isInitialized = false;
   }
 
   /**
@@ -35,13 +36,6 @@ class SummaryService {
     }
     
     return "";
-  }
-
-class SummaryService {
-  constructor() {
-    this.llmClient = null;
-    this.promptManager = new PromptManager();
-    this.isInitialized = false;
   }
 
   /**
