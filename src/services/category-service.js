@@ -401,6 +401,31 @@ class CategoryService {
   }
 
   /**
+   * 獲取所有有效的監控資料夾
+   * @returns {Array<string>} 監控資料夾路徑陣列
+   */
+  async getWatchFolders() {
+    try {
+      const result = await dbConnection.query(`
+        SELECT DISTINCT watch_folder 
+        FROM kess_categories 
+        WHERE is_active = TRUE 
+          AND watch_folder IS NOT NULL 
+          AND watch_folder != ''
+        ORDER BY watch_folder
+      `);
+
+      const watchFolders = result.map((row) => row.watch_folder);
+      logger.info(`從資料庫載入監控資料夾: ${watchFolders.join(", ")}`);
+
+      return watchFolders;
+    } catch (error) {
+      logger.logError("獲取監控資料夾失敗", error);
+      throw error;
+    }
+  }
+
+  /**
    * 智能分類建議
    * @param {string} filePath - 檔案路徑
    * @param {string} content - 檔案內容

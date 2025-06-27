@@ -166,7 +166,9 @@ class KessApplication {
 
       // 開始檔案監控
       if (config.processing.enableRealTimeMonitoring) {
-        await this.fileWatcher.startWatching();
+        // 從資料庫載入監控資料夾
+        const watchFolders = await this.categoryService.getWatchFolders();
+        await this.fileWatcher.startWatching(watchFolders);
       }
 
       // 初始掃描現有檔案
@@ -181,7 +183,7 @@ class KessApplication {
       logger.info("KESS 系統啟動完成");
 
       // 顯示系統狀態
-      this.logSystemStatus();
+      await this.logSystemStatus();
     } catch (error) {
       logger.logError("KESS 系統啟動失敗", error);
       throw error;
@@ -195,7 +197,10 @@ class KessApplication {
     try {
       logger.logProcessing("INITIAL_SCAN", "開始初始檔案掃描...");
 
-      for (const folder of config.monitoring.watchFolders) {
+      // 從資料庫載入監控資料夾
+      const watchFolders = await this.categoryService.getWatchFolders();
+
+      for (const folder of watchFolders) {
         await this.fileWatcher.scanExistingFiles(folder);
       }
 
@@ -714,7 +719,9 @@ class KessApplication {
   /**
    * 記錄系統狀態
    */
-  logSystemStatus() {
+  async logSystemStatus() {
+    const watchFolders = await this.categoryService.getWatchFolders();
+
     const status = {
       isRunning: this.isRunning,
       fileWatcher: this.fileWatcher ? this.fileWatcher.getStatus() : null,
@@ -723,7 +730,7 @@ class KessApplication {
         isProcessing: this.isProcessing,
       },
       config: {
-        watchFolders: config.monitoring.watchFolders,
+        watchFolders: watchFolders,
         llmProvider: config.llm.provider,
         realtimeMonitoring: config.processing.enableRealTimeMonitoring,
       },

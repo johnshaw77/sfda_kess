@@ -93,7 +93,7 @@ const config = {
 
   // 檔案歸檔設定
   archiving: {
-    enabled: process.env.ENABLE_FILE_ARCHIVING === "true",
+    enabled: false, // 停用檔案歸檔/移動功能
     basePath: process.env.ARCHIVE_BASE_PATH || "./demo-data/archived",
     byCategory: process.env.ARCHIVE_BY_CATEGORY === "true",
     byDate: process.env.ARCHIVE_BY_DATE === "true",

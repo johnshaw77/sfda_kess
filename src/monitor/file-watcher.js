@@ -331,19 +331,86 @@ class FileWatcher extends EventEmitter {
       logger.logProcessing("SCAN_START", `開始掃描現有檔案: ${folderPath}`);
 
       const files = await this.getAllFiles(folderPath);
+      let processedCount = 0;
+      let skippedCount = 0;
 
       for (const filePath of files) {
         if (this.shouldProcessFile(filePath)) {
-          await this.handleFileEvent("add", filePath);
+          // 檢查檔案是否需要處理（新檔案或內容已變更）
+          const needsProcessing = await this.checkIfFileNeedsProcessing(filePath);
+
+          if (needsProcessing) {
+            await this.handleFileEvent("add", filePath);
+            processedCount++;
+          } else {
+            skippedCount++;
+            logger.logProcessing("SCAN_SKIP", `跳過已處理檔案: ${path.basename(filePath)}`);
+          }
         }
       }
 
       logger.logProcessing(
         "SCAN_COMPLETE",
-        `掃描完成，處理 ${files.length} 個檔案`
+        `掃描完成，處理 ${processedCount} 個檔案，跳過 ${skippedCount} 個已處理檔案`
       );
     } catch (error) {
       logger.logError(`掃描現有檔案失敗: ${folderPath}`, error);
+    }
+  }
+
+  /**
+   * 檢查檔案是否需要處理（新檔案或內容已變更）
+   * @param {string} filePath - 檔案路徑
+   * @returns {boolean} 是否需要處理
+   */
+  async checkIfFileNeedsProcessing(filePath) {
+    try {
+      // 取得檔案統計資訊
+      const stats = await fs.stat(filePath);
+
+      // 計算檔案雜湊（使用與主程式相同的 SHA-256 算法）
+      const crypto = require("crypto");
+      const fileBuffer = await fs.readFile(filePath);
+      const currentHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+
+      // 查詢資料庫中的記錄
+      const dbConnection = require("../database/connection");
+      const existing = await dbConnection.query(
+        `SELECT file_hash, file_modified_time, processing_status 
+         FROM kess_documents 
+         WHERE file_path = ? 
+         ORDER BY created_at DESC 
+         LIMIT 1`,
+        [path.resolve(filePath)]
+      );
+
+      if (existing.length === 0) {
+        // 新檔案，需要處理
+        return true;
+      }
+
+      const existingRecord = existing[0];
+
+      // 檢查雜湊是否相同
+      if (existingRecord.file_hash !== currentHash) {
+        // 檔案內容已變更，需要重新處理
+        logger.logProcessing("FILE_CHANGED", `檔案內容已變更: ${path.basename(filePath)}`);
+        return true;
+      }
+
+      // 檢查處理狀態
+      if (existingRecord.processing_status !== "completed") {
+        // 之前處理失敗或未完成，需要重新處理
+        logger.logProcessing("FILE_INCOMPLETE", `檔案處理未完成: ${path.basename(filePath)}`);
+        return true;
+      }
+
+      // 檔案已處理且內容無變更，跳過
+      return false;
+    } catch (error) {
+      logger.logError(`檢查檔案處理狀態失敗: ${filePath}`, error);
+      // 發生錯誤時，預設需要處理
+      return true;
     }
   }
 

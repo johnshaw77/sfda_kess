@@ -23,18 +23,21 @@ class SummaryService {
     // 關鍵要點：
     // 關鍵要點:
     const patterns = [
-      new RegExp(`##\\s*\\d+\\.\\s*${sectionName}([\\s\\S]*?)(?=##\\s*\\d+\\.|$)`, "i"),
+      new RegExp(
+        `##\\s*\\d+\\.\\s*${sectionName}([\\s\\S]*?)(?=##\\s*\\d+\\.|$)`,
+        "i"
+      ),
       new RegExp(`${sectionName}[：:]([\\s\\S]*?)(?=\\n\\d+\\.|##|$)`, "i"),
-      new RegExp(`${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n\\n|##|$)`, "i")
+      new RegExp(`${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n\\n|##|$)`, "i"),
     ];
-    
+
     for (const regex of patterns) {
       const match = content.match(regex);
       if (match && match[1].trim()) {
         return match[1].trim();
       }
     }
-    
+
     return "";
   }
 
@@ -223,12 +226,27 @@ class SummaryService {
    * @returns {string} 章節內容
    */
   extractSection(content, sectionName) {
-    const regex = new RegExp(
-      `${sectionName}[：:]([\\s\\S]*?)(?=\\n\\d+\\.|$)`,
-      "i"
-    );
-    const match = content.match(regex);
-    return match ? match[1].trim() : "";
+    // 支援多種格式：
+    // ## 2. 關鍵要點
+    // 關鍵要點：
+    // 關鍵要點:
+    const patterns = [
+      new RegExp(
+        `##\\s*\\d+\\.\\s*${sectionName}([\\s\\S]*?)(?=##\\s*\\d+\\.|$)`,
+        "i"
+      ),
+      new RegExp(`${sectionName}[：:]([\\s\\S]*?)(?=\\n\\d+\\.|##|$)`, "i"),
+      new RegExp(`${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n\\n|##|$)`, "i"),
+    ];
+
+    for (const regex of patterns) {
+      const match = content.match(regex);
+      if (match && match[1].trim()) {
+        return match[1].trim();
+      }
+    }
+
+    return "";
   }
 
   /**
