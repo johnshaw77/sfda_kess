@@ -5,7 +5,7 @@ const FileWatcher = require("./monitor/file-watcher");
 const DocumentProcessor = require("./processor/document-processor");
 const SummaryService = require("./services/summary-service");
 const DatabaseMigration = require("./database/migrations/migrate");
-const WindowsNetworkMonitor = require("./monitor/windows-network-monitor");
+const CrossPlatformNetworkMonitor = require("./monitor/cross-platform-network-monitor");
 const path = require("path");
 
 class KessApplication {
@@ -13,7 +13,7 @@ class KessApplication {
     this.fileWatcher = null;
     this.documentProcessor = null;
     this.summaryService = null;
-    this.windowsNetworkMonitor = null;
+    this.networkMonitor = null;
     this.isRunning = false;
     this.processingQueue = [];
     this.isProcessing = false;
@@ -96,13 +96,10 @@ class KessApplication {
       // 初始化檔案監控器
       this.fileWatcher = new FileWatcher();
 
-      // 初始化 Windows 網路監控器 (僅在 Windows 環境下)
-      if (
-        process.platform === "win32" &&
-        config.monitoring.enableNetworkMonitoring
-      ) {
-        this.windowsNetworkMonitor = new WindowsNetworkMonitor();
-        logger.info("Windows 網路監控器已初始化");
+      // 初始化跨平台網路監控器
+      if (config.monitoring.enableNetworkMonitoring) {
+        this.networkMonitor = new CrossPlatformNetworkMonitor();
+        logger.info(`跨平台網路監控器已初始化 (${process.platform})`);
       }
 
       logger.logProcessing("SERVICE_INIT", "服務模組初始化完成");
@@ -757,27 +754,27 @@ class KessApplication {
         return;
       }
 
-      // 使用 Windows 網路監控器
-      if (this.windowsNetworkMonitor) {
+      // 使用跨平台網路監控器
+      if (this.networkMonitor) {
         // 設定事件監聽器
-        this.windowsNetworkMonitor.on("fileEvent", async (eventData) => {
+        this.networkMonitor.on("fileEvent", async (eventData) => {
           await this.handleFileEvent(eventData);
         });
 
-        this.windowsNetworkMonitor.on("error", (error) => {
-          logger.logError("Windows 網路監控器發生錯誤", error);
+        this.networkMonitor.on("error", (error) => {
+          logger.logError("網路監控器發生錯誤", error);
         });
 
         // 開始監控網路路徑
         logger.info(
           `準備監控 ${config.monitoring.networkPaths.length} 個網路路徑`
         );
-        await this.windowsNetworkMonitor.startMonitoring(
+        await this.networkMonitor.startMonitoring(
           config.monitoring.networkPaths
         );
-        logger.info("Windows 網路磁碟機設定完成");
+        logger.info(`網路磁碟機設定完成 (${process.platform})`);
       } else {
-        logger.warn("Windows 網路監控器未初始化");
+        logger.warn("網路監控器未初始化");
       }
     } catch (error) {
       logger.logError("設定網路磁碟機失敗", error);
@@ -800,9 +797,9 @@ class KessApplication {
       }
 
       // 停止網路監控器
-      if (this.windowsNetworkMonitor) {
-        await this.windowsNetworkMonitor.stopMonitoring();
-        logger.info("Windows 網路監控器已停止");
+      if (this.networkMonitor) {
+        await this.networkMonitor.stopMonitoring();
+        logger.info("網路監控器已停止");
       }
 
       // 等待處理佇列完成
