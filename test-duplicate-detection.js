@@ -13,12 +13,18 @@ async function testDuplicateDetection() {
     const fileWatcher = new FileWatcher();
 
     // 測試檔案路徑（使用 demo-data 中的檔案）
-    const testFilePath = path.join(__dirname, "demo-data", "品質檢驗報告_SMS-2025-001.md");
+    const testFilePath = path.join(
+      __dirname,
+      "demo-data",
+      "品質檢驗報告_SMS-2025-001.md"
+    );
 
     console.log(`測試檔案: ${testFilePath}`);
 
     // 測試檢查檔案是否需要處理
-    const needsProcessing = await fileWatcher.checkIfFileNeedsProcessing(testFilePath);
+    const needsProcessing = await fileWatcher.checkIfFileNeedsProcessing(
+      testFilePath
+    );
 
     console.log(`\n結果: ${needsProcessing ? "需要處理" : "跳過處理"}`);
 

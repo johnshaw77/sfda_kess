@@ -6,6 +6,7 @@ const DocumentProcessor = require("./processor/document-processor");
 const SummaryService = require("./services/summary-service");
 const DatabaseMigration = require("./database/migrations/migrate");
 const CrossPlatformNetworkMonitor = require("./monitor/cross-platform-network-monitor");
+const CategoryService = require("./services/category-service");
 const path = require("path");
 
 class KessApplication {
@@ -17,6 +18,7 @@ class KessApplication {
     this.isRunning = false;
     this.processingQueue = [];
     this.isProcessing = false;
+    this.categoryService = new CategoryService();
   }
 
   /**
@@ -690,26 +692,28 @@ class KessApplication {
         await this.fileWatcher.stopWatching();
       }
 
+      // 停止網路監控器
+      if (this.networkMonitor) {
+        await this.networkMonitor.stopMonitoring();
+        logger.info("網路監控器已停止");
+      }
+
       // 等待處理佇列完成
-      let waitCount = 0;
-      while (this.processingQueue.length > 0 && waitCount < 30) {
-        logger.info(
-          `等待處理佇列完成... 剩餘: ${this.processingQueue.length} 個檔案`
-        );
+      const maxWaitTime = 30000; // 30秒
+      const startTime = Date.now();
+      while (this.isProcessing && Date.now() - startTime < maxWaitTime) {
+        logger.info("等待處理佇列完成...");
         await this.delay(1000);
-        waitCount++;
       }
 
       // 關閉資料庫連線
-      if (dbConnection.isReady()) {
+      if (dbConnection && dbConnection.connection) {
         await dbConnection.close();
       }
 
-      logger.info("KESS 系統已關閉");
-      process.exit(0);
+      logger.info("KESS 系統已安全關閉");
     } catch (error) {
-      logger.logError("系統關閉時發生錯誤", error);
-      process.exit(1);
+      logger.logError("關閉系統時發生錯誤", error);
     }
   }
 

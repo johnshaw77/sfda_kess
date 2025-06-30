@@ -15,7 +15,11 @@ async function testVariousScenarios() {
 
     // 測試案例 1: 已處理且雜湊相同的檔案
     console.log("=== 測試案例 1: 已處理的檔案 ===");
-    const testFile1 = path.join(__dirname, "demo-data", "品質檢驗報告_SMS-2025-001.md");
+    const testFile1 = path.join(
+      __dirname,
+      "demo-data",
+      "品質檢驗報告_SMS-2025-001.md"
+    );
     const needs1 = await fileWatcher.checkIfFileNeedsProcessing(testFile1);
     console.log(`結果: ${needs1 ? "需要處理" : "跳過處理"} ✓\n`);
 
@@ -27,7 +31,7 @@ async function testVariousScenarios() {
 
     // 測試案例 3: 檢查資料庫中所有檔案的狀態
     console.log("=== 資料庫中的檔案狀態統計 ===");
-    const [stats] = await dbConnection.query(`
+    const stats = await dbConnection.query(`
       SELECT 
         processing_status,
         COUNT(*) as count,
@@ -36,8 +40,10 @@ async function testVariousScenarios() {
       GROUP BY processing_status
     `);
 
-    stats.forEach(stat => {
-      console.log(`狀態: ${stat.processing_status}, 數量: ${stat.count}, 有雜湊: ${stat.with_hash}`);
+    stats.forEach((stat) => {
+      console.log(
+        `狀態: ${stat.processing_status}, 數量: ${stat.count}, 有雜湊: ${stat.with_hash}`
+      );
     });
 
     console.log("\n=== 監控資料夾中的檔案檢測 ===");
@@ -46,10 +52,11 @@ async function testVariousScenarios() {
     let needProcessing = 0;
     let skipProcessing = 0;
 
-    for (const fileName of demoFiles.slice(0, 5)) { // 只測試前5個檔案
+    for (const fileName of demoFiles.slice(0, 5)) {
+      // 只測試前5個檔案
       const filePath = path.join(__dirname, "demo-data", fileName);
       const stats = await fs.stat(filePath);
-      
+
       if (stats.isFile()) {
         const needs = await fileWatcher.checkIfFileNeedsProcessing(filePath);
         if (needs) {
@@ -75,7 +82,6 @@ async function testVariousScenarios() {
     console.log("   • 檔案雜湊已變更 → 需要處理");
     console.log("   • 之前處理失敗的檔案 → 需要處理");
     console.log("   • 已完成處理且雜湊相同 → 跳過處理");
-
   } catch (error) {
     console.error("❌ 測試失敗:", error);
   }

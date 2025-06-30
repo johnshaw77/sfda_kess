@@ -337,14 +337,19 @@ class FileWatcher extends EventEmitter {
       for (const filePath of files) {
         if (this.shouldProcessFile(filePath)) {
           // 檢查檔案是否需要處理（新檔案或內容已變更）
-          const needsProcessing = await this.checkIfFileNeedsProcessing(filePath);
+          const needsProcessing = await this.checkIfFileNeedsProcessing(
+            filePath
+          );
 
           if (needsProcessing) {
             await this.handleFileEvent("add", filePath);
             processedCount++;
           } else {
             skippedCount++;
-            logger.logProcessing("SCAN_SKIP", `跳過已處理檔案: ${path.basename(filePath)}`);
+            logger.logProcessing(
+              "SCAN_SKIP",
+              `跳過已處理檔案: ${path.basename(filePath)}`
+            );
           }
         }
       }
@@ -371,7 +376,10 @@ class FileWatcher extends EventEmitter {
       // 計算檔案雜湊（使用與主程式相同的 SHA-256 算法）
       const crypto = require("crypto");
       const fileBuffer = await fs.readFile(filePath);
-      const currentHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+      const currentHash = crypto
+        .createHash("sha256")
+        .update(fileBuffer)
+        .digest("hex");
 
       // 查詢資料庫中的記錄
       const dbConnection = require("../database/connection");
@@ -394,14 +402,20 @@ class FileWatcher extends EventEmitter {
       // 檢查雜湊是否相同
       if (existingRecord.file_hash !== currentHash) {
         // 檔案內容已變更，需要重新處理
-        logger.logProcessing("FILE_CHANGED", `檔案內容已變更: ${path.basename(filePath)}`);
+        logger.logProcessing(
+          "FILE_CHANGED",
+          `檔案內容已變更: ${path.basename(filePath)}`
+        );
         return true;
       }
 
       // 檢查處理狀態
       if (existingRecord.processing_status !== "completed") {
         // 之前處理失敗或未完成，需要重新處理
-        logger.logProcessing("FILE_INCOMPLETE", `檔案處理未完成: ${path.basename(filePath)}`);
+        logger.logProcessing(
+          "FILE_INCOMPLETE",
+          `檔案處理未完成: ${path.basename(filePath)}`
+        );
         return true;
       }
 

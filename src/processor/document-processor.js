@@ -7,6 +7,7 @@ const xlsx = require("xlsx");
 const logger = require("../utils/logger");
 const fileArchivingService = require("../services/file-archiving-service");
 const EnhancedPdfProcessor = require("./enhanced-pdf-processor");
+// const pptx2json = require("pptx2json");
 
 class DocumentProcessor {
   constructor() {
@@ -19,6 +20,7 @@ class DocumentProcessor {
       ".xlsx": this.processXlsxFile.bind(this),
       ".xls": this.processXlsxFile.bind(this),
       ".rtf": this.processRtfFile.bind(this), // 添加 RTF 支援
+      // ".pptx": this.processPptxFile.bind(this), // 暫時停用 pptx 處理
     };
 
     // 初始化增強版 PDF 處理器
@@ -492,6 +494,34 @@ class DocumentProcessor {
       return content;
     } catch (error) {
       throw new Error(`讀取 Excel 檔案失敗: ${error.message}`);
+    }
+  }
+
+  /**
+   * 處理 PowerPoint 檔案 (.pptx)
+   * @param {string} filePath - 檔案路徑
+   * @returns {string} 檔案內容
+   */
+  async processPptxFile(filePath) {
+    try {
+      logger.info(`開始處理 PPTX 檔案: ${filePath}`);
+      // 正確用法：直接呼叫 pptx2json(filePath)
+      const result = await pptx2json(filePath);
+      if (!result || !result.slides || result.slides.length === 0) {
+        throw new Error("PPTX 檔案無法解析或無內容");
+      }
+      // 將所有投影片文字合併
+      const content = result.slides
+        .map((slide) => (slide.texts ? slide.texts.join(" ") : ""))
+        .join("\n---\n");
+      if (!content || content.trim().length === 0) {
+        throw new Error("PPTX 檔案內容為空或無法讀取");
+      }
+      logger.info(`PPTX 檔案處理完成，內容長度: ${content.length} 字符`);
+      return content;
+    } catch (error) {
+      logger.logError(`讀取 PPTX 檔案失敗: ${filePath}`, error);
+      throw new Error(`讀取 PPTX 檔案失敗: ${error.message}`);
     }
   }
 
